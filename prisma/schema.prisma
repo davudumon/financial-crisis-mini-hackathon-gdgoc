@@ -1,11 +1,94 @@
-
-
 generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
+}
+
+enum CreditDecision {
+  approved
+  rejected
+  manual_review
+}
+
+model Borrower {
+  id           String   @id @default(uuid()) @db.Char(36)
+  name         String
+  businessType String?  @db.VarChar(100)
+  phoneNumber  String?  @db.VarChar(30)
+  email        String?  @db.VarChar(255)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  alternativeData      AlternativeData[]
+  aiScoringResults     AiScoringResult[]
+  finalCreditDecisions FinalCreditDecision[]
+
+  @@index([createdAt])
+  @@index([phoneNumber])
+  @@index([email])
+}
+
+model AlternativeData {
+  id         String @id @default(uuid()) @db.Char(36)
+  borrowerId String @db.Char(36)
+  mutasiRekeningFileUrl          String   @db.VarChar(2048)
+  mutasiRekeningUploadedAt       DateTime @default(now())
+  pulsaAvg             Decimal? @db.Decimal(18, 2)
+  listrikFrequencyDays Int?
+  rawNotesText         String?  @db.Text
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  borrower Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+
+  @@index([borrowerId, createdAt])
+}
+
+model AiScoringResult {
+  id                       String   @id @default(uuid()) @db.Char(36)
+  borrowerId               String   @db.Char(36)
+  geminiCreditScore        Int?
+  geminiAnalysisReason     String?  @db.Text
+  promptVersion            String   @db.VarChar(50)
+  modelVersion             String   @db.VarChar(50)
+
+  // Optional observability fields for multimodal extraction
+  extractedTextConfidence Decimal? @db.Decimal(5, 4)
+  imageQualityScore       Int?
+
+  // Keep raw payloads for audit/replay/backtesting
+  rawInputJson       Json?
+  geminiResponseJson Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  borrower             Borrower              @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  finalCreditDecisions FinalCreditDecision[]
+
+  @@index([borrowerId, createdAt])
+  @@index([promptVersion])
+  @@index([modelVersion])
+}
+
+model FinalCreditDecision {
+  id                  String         @id @default(uuid()) @db.Char(36)
+  borrowerId          String         @db.Char(36)
+  aiScoringResultId   String?        @db.Char(36)
+  adjustedProbability Decimal?       @db.Decimal(5, 4)
+  finalScore          Int?
+  limitAmount         Decimal?       @db.Decimal(18, 2)
+  decision            CreditDecision
+  createdAt           DateTime       @default(now())
+  updatedAt           DateTime       @updatedAt
+
+  borrower        Borrower         @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  aiScoringResult AiScoringResult? @relation(fields: [aiScoringResultId], references: [id], onDelete: SetNull)
+
+  @@index([borrowerId, createdAt])
+  @@index([aiScoringResultId])
+  @@index([decision])
 }
