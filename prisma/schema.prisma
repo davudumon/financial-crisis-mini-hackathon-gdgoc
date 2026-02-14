@@ -25,6 +25,7 @@ model Borrower {
   alternativeData      AlternativeData[]
   aiScoringResults     AiScoringResult[]
   finalCreditDecisions FinalCreditDecision[]
+  alternativeDataRaws  AlternativeDataRaw[]
 
   @@index([createdAt])
   @@index([phoneNumber])
@@ -32,15 +33,15 @@ model Borrower {
 }
 
 model AlternativeData {
-  id         String @id @default(uuid()) @db.Char(36)
-  borrowerId String @db.Char(36)
-  mutasiRekeningFileUrl          String   @db.VarChar(2048)
-  mutasiRekeningUploadedAt       DateTime @default(now())
-  pulsaAvg             Decimal? @db.Decimal(18, 2)
-  listrikFrequencyDays Int?
-  rawNotesText         String?  @db.Text
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                       String   @id @default(uuid()) @db.Char(36)
+  borrowerId               String   @db.Char(36)
+  mutasiRekeningFileUrl    String   @db.VarChar(2048)
+  mutasiRekeningUploadedAt DateTime @default(now())
+  pulsaAvg                 Decimal? @db.Decimal(18, 2)
+  listrikFrequencyDays     Int?
+  rawNotesText             String?  @db.Text
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   borrower Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
 
@@ -48,12 +49,12 @@ model AlternativeData {
 }
 
 model AiScoringResult {
-  id                       String   @id @default(uuid()) @db.Char(36)
-  borrowerId               String   @db.Char(36)
-  geminiCreditScore        Int?
-  geminiAnalysisReason     String?  @db.Text
-  promptVersion            String   @db.VarChar(50)
-  modelVersion             String   @db.VarChar(50)
+  id                   String  @id @default(uuid()) @db.Char(36)
+  borrowerId           String  @db.Char(36)
+  geminiCreditScore    Int?
+  geminiAnalysisReason String? @db.Text
+  promptVersion        String  @db.VarChar(50)
+  modelVersion         String  @db.VarChar(50)
 
   // Optional observability fields for multimodal extraction
   extractedTextConfidence Decimal? @db.Decimal(5, 4)
@@ -91,4 +92,31 @@ model FinalCreditDecision {
   @@index([borrowerId, createdAt])
   @@index([aiScoringResultId])
   @@index([decision])
+}
+
+model AlternativeDataRaw {
+  id         String   @id @default(uuid()) @db.Char(36)
+  borrowerId String   @db.Char(36)
+  sourceType String   @db.VarChar(100)
+  rawJson    Json
+  fileUrl    String?  @db.VarChar(2048)
+  createdAt  DateTime @default(now())
+
+  borrower       Borrower        @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
+  ocrExtractions OcrExtraction[]
+
+  @@index([borrowerId, createdAt])
+}
+
+model OcrExtraction {
+  id                   String   @id @default(uuid()) @db.Char(36)
+  alternativeDataRawId String   @db.Char(36)
+  extractedText        String   @db.Text
+  confidence           Decimal? @db.Decimal(5, 4)
+  geminiResponseJson   Json?
+  createdAt            DateTime @default(now())
+
+  alternativeDataRaw AlternativeDataRaw @relation(fields: [alternativeDataRawId], references: [id], onDelete: Cascade)
+
+  @@index([alternativeDataRawId, createdAt])
 }
