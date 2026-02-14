@@ -14,19 +14,23 @@ enum CreditDecision {
 }
 
 model Borrower {
-  id           String   @id @default(uuid()) @db.Char(36)
-  name         String
-  businessType String?  @db.VarChar(100)
-  phoneNumber  String?  @db.VarChar(30)
-  email        String?  @db.VarChar(255)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Char(36)
+  name             String
+  businessType     String?  @db.VarChar(100)
+  phoneNumber      String?  @db.VarChar(30)
+  email            String?  @db.VarChar(255)
+  passwordHash     String   @db.VarChar(255)
+  refreshTokenHash String?  @db.VarChar(255)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   alternativeData      AlternativeData[]
   aiScoringResults     AiScoringResult[]
   finalCreditDecisions FinalCreditDecision[]
   alternativeDataRaws  AlternativeDataRaw[]
 
+  @@unique([phoneNumber])
+  @@unique([email])
   @@index([createdAt])
   @@index([phoneNumber])
   @@index([email])
