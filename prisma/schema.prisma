@@ -14,33 +14,37 @@ enum CreditDecision {
 }
 
 model Borrower {
-  id           String   @id @default(uuid()) @db.Char(36)
-  name         String
-  businessType String?  @db.VarChar(100)
-  phoneNumber  String?  @db.VarChar(30)
-  email        String?  @db.VarChar(255)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id               String   @id @default(uuid()) @db.Char(36)
+  name             String
+  businessType     String?  @db.VarChar(100)
+  phoneNumber      String?  @db.VarChar(30)
+  email            String?  @db.VarChar(255)
+  passwordHash     String   @db.VarChar(255)
+  refreshTokenHash String?  @db.VarChar(255)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   alternativeData      AlternativeData[]
   aiScoringResults     AiScoringResult[]
   finalCreditDecisions FinalCreditDecision[]
 
+  @@unique([phoneNumber])
+  @@unique([email])
   @@index([createdAt])
   @@index([phoneNumber])
   @@index([email])
 }
 
 model AlternativeData {
-  id         String @id @default(uuid()) @db.Char(36)
-  borrowerId String @db.Char(36)
-  mutasiRekeningFileUrl          String   @db.VarChar(2048)
-  mutasiRekeningUploadedAt       DateTime @default(now())
-  pulsaAvg             Decimal? @db.Decimal(18, 2)
-  listrikFrequencyDays Int?
-  rawNotesText         String?  @db.Text
-  createdAt            DateTime @default(now())
-  updatedAt            DateTime @updatedAt
+  id                       String   @id @default(uuid()) @db.Char(36)
+  borrowerId               String   @db.Char(36)
+  mutasiRekeningFileUrl    String   @db.VarChar(2048)
+  mutasiRekeningUploadedAt DateTime @default(now())
+  pulsaAvg                 Decimal? @db.Decimal(18, 2)
+  listrikFrequencyDays     Int?
+  rawNotesText             String?  @db.Text
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
   borrower Borrower @relation(fields: [borrowerId], references: [id], onDelete: Cascade)
 
@@ -48,12 +52,12 @@ model AlternativeData {
 }
 
 model AiScoringResult {
-  id                       String   @id @default(uuid()) @db.Char(36)
-  borrowerId               String   @db.Char(36)
-  geminiCreditScore        Int?
-  geminiAnalysisReason     String?  @db.Text
-  promptVersion            String   @db.VarChar(50)
-  modelVersion             String   @db.VarChar(50)
+  id                   String  @id @default(uuid()) @db.Char(36)
+  borrowerId           String  @db.Char(36)
+  geminiCreditScore    Int?
+  geminiAnalysisReason String? @db.Text
+  promptVersion        String  @db.VarChar(50)
+  modelVersion         String  @db.VarChar(50)
 
   // Optional observability fields for multimodal extraction
   extractedTextConfidence Decimal? @db.Decimal(5, 4)
