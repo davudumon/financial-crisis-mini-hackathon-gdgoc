@@ -53,12 +53,13 @@ model AlternativeData {
 }
 
 model AiScoringResult {
-  id                   String  @id @default(uuid()) @db.Char(36)
-  borrowerId           String  @db.Char(36)
-  geminiCreditScore    Int?
-  geminiAnalysisReason String? @db.Text
-  promptVersion        String  @db.VarChar(50)
-  modelVersion         String  @db.VarChar(50)
+  id                       String   @id @default(uuid()) @db.Char(36)
+  borrowerId               String   @db.Char(36)
+  geminiDefaultProbability Decimal? @db.Decimal(5, 4)
+  geminiCreditScore        Int?
+  geminiAnalysisReason     String?  @db.Text
+  promptVersion            String   @db.VarChar(50)
+  modelVersion             String   @db.VarChar(50)
 
   // Optional observability fields for multimodal extraction
   extractedTextConfidence Decimal? @db.Decimal(5, 4)
